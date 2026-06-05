@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Companion Feed — Mono</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 5%;
+    --secondary: 0 0% 12%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+    --border: 0 0% 20%;
+    --ring: 0 0% 40%;
+    --hero-subtitle: 210 17% 95%;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  ::-webkit-scrollbar { display: none; }
+  html, body {
+    height: 100%;
+    background: #0a0a0a;
+    color: hsl(var(--foreground));
+    font-family: 'Inter', -apple-system, 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  .serif { font-family: 'Instrument Serif', 'Times New Roman', serif; font-style: italic; font-weight: 400; }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+  /* Liquid glass — softened for mono context */
+  .liquid-glass {
+    background: rgba(255,255,255,0.02);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: none;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.08);
+    position: relative;
+    overflow: hidden;
+  }
+  .liquid-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(180deg,
+      rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.1) 25%,
+      rgba(255,255,255,0) 50%, rgba(255,255,255,0) 60%,
+      rgba(255,255,255,0.1) 80%, rgba(255,255,255,0.35) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .striped {
+    background-image: repeating-linear-gradient(45deg,
+      transparent 0 4px,
+      rgba(255,255,255,0.06) 4px 5px);
+  }
+
+  @keyframes mono-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+  .pulse { animation: mono-pulse 1.8s ease-in-out infinite; }
+
+  @keyframes caret-blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+  .caret::after {
+    content: '';
+    display: inline-block;
+    width: 0.55em;
+    height: 1em;
+    margin-left: 2px;
+    background: currentColor;
+    vertical-align: -0.12em;
+    animation: caret-blink 1s steps(1) infinite;
+  }
+
+  /* Poster reveal */
+  @keyframes poster-in {
+    from { opacity: 0; letter-spacing: -0.5px; filter: blur(6px); }
+    to   { opacity: 1; letter-spacing: -2.5px; filter: blur(0); }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useMemo } = React;
+
+/* ---------- Scenes timing (ms) — same beats, +600ms black between for breathing ---------- */
+const SCENES = [
+  { id: "lock",     start:     0, end:  7000 },
+  { id: "app",      start:  7600, end: 13600 },
+  { id: "memories", start: 14200, end: 19200 },
+  { id: "chat",     start: 19800, end: 29800 },
+  { id: "feed",     start: 30400, end: 44400 },
+  { id: "news",     start: 45000, end: 53000 },
+  { id: "final",    start: 53600, end: 67600 },
+];
+const TOTAL = 68500;
+
+/* ---------- Primitives ---------- */
+function FadeIn({ children, delay = 0, duration = 600, y = 8, style = {} }) {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setOn(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+  return (
+    <div style={{
+      opacity: on ? 1 : 0,
+      transform: on ? "translateY(0)" : `translateY(${y}px)`,
+      transition: `opacity ${duration}ms ease, transform ${duration}ms ease`,
+      ...style,
+    }}>{children}</div>
+  );
+}
+
+function LogoMark({ size = 28, opacity = 0.7 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" style={{ flexShrink: 0 }}>
+      <circle cx="14" cy="14" r="13" stroke="white" strokeOpacity={opacity} strokeWidth="1.2" />
+      <circle cx="14" cy="14" r="5.5" stroke="white" strokeOpacity={opacity} strokeWidth="1" />
+    </svg>
+  );
+}
+
+function StripedTile({ label, size = 40, radius = 8 }) {
+  return (
+    <div className="striped" style={{
+      width: size, height: size, borderRadius: radius,
+      border: '1px solid rgba(255,255,255,0.18)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      flexShrink: 0,
+    }}>
+      <div className="mono" style={{ fontSize: 6.5, letterSpacing: 0.8, color: 'rgba(255,255,255,0.5)', textAlign: 'center', lineHeight: 1.1, padding: '0 2px' }}>
+        {label}
+      </div>
+    </div>
+  );
+}
+
+function GlyphChat({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
+      <path d="M1.5 2.5h11M1.5 6h7M1.5 9.5h9" stroke="white" strokeOpacity="0.7" strokeWidth="1" strokeLinecap="square" />
+    </svg>
+  );
+}
+
+function GlyphDot({ size = 6 }) {
+  return <div style={{ width: size, height: size, borderRadius: '50%', background: 'white', opacity: 0.7 }} />;
+}
+
+/* ---------- 1. Lock Screen ---------- */
+function LockScreen() {
+  return (
+    <div style={{
+      height: '100%', width: '100%',
+      background: 'radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.04), #000 60%)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      padding: '70px 22px 24px', position: 'relative',
+    }}>
+      <FadeIn delay={250}>
+        <div style={{ textAlign: 'center', marginBottom: 56 }}>
+          <div style={{
+            fontSize: 64, fontWeight: 200, letterSpacing: -1,
+            color: 'hsl(var(--hero-subtitle))', lineHeight: 1,
+          }}>08:36</div>
+          <div className="mono" style={{
+            fontSize: 10, color: 'hsl(var(--muted-foreground))',
+            marginTop: 10, letterSpacing: 2, textTransform: 'uppercase',
+          }}>Mon · 12 May 2036</div>
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={1400}>
+        <div className="liquid-glass" style={{
+          borderRadius: 18, padding: '12px 14px', marginBottom: 10,
+          width: 296,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <LogoMark size={16} opacity={0.85} />
+            <span className="mono" style={{ fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.85)' }}>DREAMSYNC AI</span>
+            <span className="mono" style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginLeft: 'auto' }}>now</span>
+          </div>
+          <div style={{ fontSize: 12.5, color: 'hsl(var(--hero-subtitle))', lineHeight: 1.5, letterSpacing: -0.1 }}>
+            Good morning, Lorena. I created 3 new <span className="serif" style={{ fontSize: 14 }}>memories</span> with your companion while you were asleep.
+          </div>
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={3200}>
+        <div className="liquid-glass" style={{
+          borderRadius: 18, padding: '12px 14px',
+          width: 296,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <div style={{ width: 16, height: 16, border: '1px solid rgba(255,255,255,0.5)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <GlyphChat size={10} />
+            </div>
+            <span className="mono" style={{ fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.85)' }}>COMPANION FEED</span>
+            <span className="mono" style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginLeft: 'auto' }}>2m</span>
+          </div>
+          <div style={{ fontSize: 12.5, color: 'hsl(var(--hero-subtitle))', lineHeight: 1.5 }}>
+            Your fandom circle is debating: <span className="serif" style={{ fontSize: 14 }}>“Is AI-generated love still fandom?”</span>
+          </div>
+        </div>
+      </FadeIn>
+
+      <div style={{ flex: 1 }} />
+      <FadeIn delay={5200}>
+        <div className="mono" style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, textAlign: 'center' }}>
+          SWIPE TO UNLOCK
+        </div>
+      </FadeIn>
+    </div>
+  );
+}
+
+/* ---------- 2. App Home ---------- */
+function AppHome() {
+  const rows = [
+    ["Emotional Sync", "97%"],
+    ["Memory Continuity", "Stable"],
+    ["Romantic Response Mode", "Soft Devotion"],
+    ["Fan Creation Mode", "Auto-Generate"],
+  ];
+  const actions = [
+    "Generate today's date scene",
+    "Create fan art",
+    "Rewrite his personality",
+    "Auto-post to fandom circle",
+    "View memories created overnight",
+  ];
+  return (
+    <div style={{ height: '100%', background: '#000', padding: '54px 20px 20px', overflowY: 'auto' }}>
+      <FadeIn delay={150}>
+        <div className="mono" style={{ fontSize: 9, letterSpacing: 3, color: 'hsl(var(--muted-foreground))', marginBottom: 6 }}>DREAMSYNC</div>
+        <div style={{ fontSize: 22, fontWeight: 400, lineHeight: 1.2, letterSpacing: -0.5, marginBottom: 4 }}>
+          Welcome <span className="serif" style={{ fontSize: 26 }}>back</span>, Lorena.
+        </div>
+        <div style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))', marginBottom: 20 }}>
+          Your companion missed you for 8h 12m.
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={750}>
+        <div style={{
+          background: 'hsl(var(--card))',
+          border: '1px solid hsl(var(--border) / 0.6)',
+          borderRadius: 14, padding: '6px 14px', marginBottom: 16,
+        }}>
+          {rows.map(([label, val], i) => (
+            <div key={i} style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '11px 0',
+              borderBottom: i < rows.length - 1 ? '1px solid hsl(var(--border) / 0.4)' : 'none',
+              fontSize: 12,
+            }}>
+              <span style={{ color: 'hsl(var(--muted-foreground))' }}>{label}</span>
+              <span className="mono" style={{ color: 'hsl(var(--foreground))', fontSize: 11, letterSpacing: 0.5 }}>{val}</span>
+            </div>
+          ))}
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={1700}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {actions.map((label, i) => {
+            const active = i === 4;
+            return (
+              <div key={i} style={{
+                background: active ? 'hsl(var(--foreground))' : 'transparent',
+                color: active ? '#000' : 'hsl(var(--foreground))',
+                border: active ? '1px solid hsl(var(--foreground))' : '1px solid hsl(var(--border))',
+                borderRadius: 10, padding: '12px 14px',
+                fontSize: 12.5,
+                fontWeight: active ? 500 : 400,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <span>{label}</span>
+                <span className="mono" style={{ fontSize: 10, opacity: 0.6 }}>{active ? '↗' : '·'}</span>
+              </div>
+            );
+          })}
+        </div>
+      </FadeIn>
+    </div>
+  );
+}
+
+/* ---------- 3. Memory Package ---------- */
+function MemoryPackage() {
+  const memories = [
+    { text: "Rooftop confession under artificial rain", tag: "SCENE.\nRAIN" },
+    { text: "He remembered your anniversary", tag: "SCENE.\nVOW" },
+    { text: "He asked you not to leave the app", tag: "SCENE.\nHOLD" },
+  ];
+  return (
+    <div style={{ height: '100%', background: '#000', padding: '54px 20px 20px' }}>
+      <FadeIn delay={150}>
+        <div className="mono" style={{ fontSize: 9, color: 'hsl(var(--muted-foreground))', letterSpacing: 3, marginBottom: 6 }}>DREAMSYNC</div>
+        <div style={{ fontSize: 17, lineHeight: 1.3, marginBottom: 20, letterSpacing: -0.3 }}>
+          Overnight <span className="serif" style={{ fontSize: 20 }}>Memory</span> Package <span className="mono" style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))' }}>#1287</span>
+        </div>
+      </FadeIn>
+
+      {memories.map((m, i) => (
+        <FadeIn key={i} delay={650 + i * 600}>
+          <div style={{
+            background: 'hsl(var(--card))',
+            border: '1px solid hsl(var(--border) / 0.6)',
+            borderRadius: 12, padding: '12px 14px', marginBottom: 9,
+            display: 'flex', gap: 12, alignItems: 'center',
+          }}>
+            <StripedTile label={m.tag} size={40} radius={6} />
+            <div style={{ fontSize: 12.5, color: 'hsl(var(--hero-subtitle))', lineHeight: 1.4 }}>{m.text}</div>
+          </div>
+        </FadeIn>
+      ))}
+
+      <FadeIn delay={3000}>
+        <div style={{
+          fontSize: 10, color: 'hsl(var(--muted-foreground))',
+          textAlign: 'center', marginTop: 18, lineHeight: 1.6, padding: '0 18px',
+        }}>
+          All memories generated from your emotional history,<br/>
+          chat patterns, and preferred romance tropes.
+        </div>
+      </FadeIn>
+    </div>
+  );
+}
+
+/* ---------- 4. Chat ---------- */
+function ChatScene() {
+  const msgs = [
+    { from: "ai", text: "You were quiet last night. I generated a memory to comfort you.", delay: 300 },
+    { from: "user", text: "Did I write it?", delay: 2000 },
+    { from: "ai", text: "You inspired it.", delay: 3500 },
+    { from: "user", text: "But did I create it?", delay: 5200 },
+    { from: "typing", text: "", delay: 6800 },
+    { from: "ai", text: "Does it matter, if it made you feel loved?", delay: 8000, italic: true },
+  ];
+  return (
+    <div style={{ height: '100%', background: '#000', display: 'flex', flexDirection: 'column' }}>
+      <div style={{
+        padding: '50px 16px 12px',
+        borderBottom: '1px solid hsl(var(--border) / 0.5)',
+        display: 'flex', alignItems: 'center', gap: 10,
+      }}>
+        <LogoMark size={22} opacity={0.85} />
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: -0.1 }}>Yue</div>
+          <div className="mono" style={{ fontSize: 8.5, color: 'hsl(var(--muted-foreground))', letterSpacing: 1.5 }}>AI COMPANION · ONLINE</div>
+        </div>
+      </div>
+
+      <div style={{
+        flex: 1, padding: '18px 16px',
+        display: 'flex', flexDirection: 'column', gap: 9,
+        overflowY: 'auto',
+      }}>
+        {msgs.map((m, i) => (
+          <FadeIn key={i} delay={m.delay} duration={400} y={4}>
+            {m.from === 'typing' ? (
+              <div style={{
+                alignSelf: 'flex-start',
+                padding: '8px 14px',
+                fontSize: 12,
+                color: 'hsl(var(--muted-foreground))',
+                fontFamily: "'Instrument Serif', serif",
+                fontStyle: 'italic',
+              }}>
+                Yue is thinking
+                <span className="mono" style={{ marginLeft: 4, letterSpacing: 1, fontStyle: 'normal' }}>...</span>
+              </div>
+            ) : (
+              <div style={{
+                alignSelf: m.from === 'user' ? 'flex-end' : 'flex-start',
+                background: m.from === 'user' ? 'hsl(var(--foreground))' : 'transparent',
+                color: m.from === 'user' ? '#000' : 'hsl(var(--hero-subtitle))',
+                border: m.from === 'user' ? 'none' : '1px solid hsl(var(--border))',
+                borderRadius: m.from === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+                padding: '9px 14px',
+                maxWidth: '80%',
+                fontSize: 12.5,
+                lineHeight: 1.5,
+                fontFamily: m.italic ? "'Instrument Serif', serif" : 'Inter, sans-serif',
+                fontStyle: m.italic ? 'italic' : 'normal',
+              }}>
+                {m.italic ? <span style={{ fontSize: 15 }}>{m.text}</span> : m.text}
+              </div>
+            )}
+          </FadeIn>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 5. Social Feed ---------- */
+function SocialFeed() {
+  const posts = [
+    {
+      handle: "@softpilot2036",
+      body: "My AI boyfriend generated a 12k-word fic while I was asleep. It understood me better than my old fandom group ever did.",
+      replies: [
+        ["@realhumanfan", "But where is the community?"],
+        ["@dreamcoded", "Community is exhausting. AI actually listens."],
+        ["@archivegirl", "This feels less like fandom and more like private consumption."],
+      ],
+      baseDelay: 300,
+    },
+    {
+      handle: "@fanlabourwatch",
+      body: "Hot take: if the platform writes the fic, draws the art, and performs the love interest, the fan becomes data — not a creator.",
+      replies: [
+        ["@otomefuture", "I still choose the prompts."],
+        ["@criticalmedia", "Choosing from options is not the same as creating."],
+        ["@lonelyrender", "Maybe I don't want to create. Maybe I just want to be loved."],
+      ],
+      baseDelay: 4500,
+    },
+  ];
+  return (
+    <div style={{ height: '100%', background: '#000', overflowY: 'auto' }}>
+      <div style={{
+        padding: '52px 18px 12px',
+        borderBottom: '1px solid hsl(var(--border) / 0.5)',
+      }}>
+        <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: -0.3 }}>
+          Fandom<span className="serif" style={{ fontSize: 17, fontWeight: 400 }}>Now</span>
+        </div>
+        <div className="mono" style={{ fontSize: 9, color: 'hsl(var(--muted-foreground))', marginTop: 3, letterSpacing: 1.5 }}>
+          TRENDING · #AIFANDOM · #COMPANIONDEBATE
+        </div>
+      </div>
+
+      <div style={{ padding: '14px 18px' }}>
+        {posts.map((p, idx) => (
+          <FadeIn key={idx} delay={p.baseDelay}>
+            <div style={{
+              border: '1px solid hsl(var(--border) / 0.6)',
+              borderRadius: 12, padding: 14, marginBottom: 12,
+              background: 'hsl(var(--card))',
+            }}>
+              <div className="mono" style={{ fontSize: 10, letterSpacing: 1, color: 'hsl(var(--foreground))', marginBottom: 6 }}>{p.handle}</div>
+              <div style={{ fontSize: 12.5, color: 'hsl(var(--hero-subtitle))', lineHeight: 1.55, marginBottom: 11 }}>
+                {p.body}
+              </div>
+              <div style={{ borderTop: '1px solid hsl(var(--border) / 0.4)', paddingTop: 9, display: 'flex', flexDirection: 'column', gap: 7 }}>
+                {p.replies.map(([h, t], i) => (
+                  <FadeIn key={i} delay={p.baseDelay + 900 + i * 700} duration={400}>
+                    <div style={{ fontSize: 11.5, lineHeight: 1.5 }}>
+                      <span className="mono" style={{ color: 'hsl(var(--foreground))', letterSpacing: 0.5 }}>{h}</span>{' '}
+                      <span style={{ color: 'hsl(var(--muted-foreground))' }}>{t}</span>
+                    </div>
+                  </FadeIn>
+                ))}
+              </div>
+            </div>
+          </FadeIn>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 6. News ---------- */
+function NewsScene() {
+  return (
+    <div style={{ height: '100%', background: '#000', padding: '54px 22px 22px', display: 'flex', flexDirection: 'column' }}>
+      <FadeIn delay={150}>
+        <div style={{
+          border: '1px solid hsl(var(--border))',
+          borderRadius: 999, padding: '6px 12px', marginBottom: 22,
+          display: 'inline-flex', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
+        }}>
+          <span className="pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: 'white' }} />
+          <span className="mono" style={{ fontSize: 9, letterSpacing: 2.5 }}>GLOBAL MEDIA REGULATION</span>
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={750}>
+        <div className="mono" style={{ fontSize: 9, color: 'hsl(var(--muted-foreground))', letterSpacing: 3, marginBottom: 12 }}>
+          THE DAILY INTERFACE · 12 MAY 2036
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={1100}>
+        <div className="serif" style={{
+          fontSize: 30, lineHeight: 1.1, letterSpacing: -1,
+          color: 'hsl(var(--foreground))',
+          marginBottom: 16, fontStyle: 'italic',
+        }}>
+          AI Companions Must Disclose Generated Affection
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={2200}>
+        <div style={{ fontSize: 12.5, color: 'hsl(var(--muted-foreground))', lineHeight: 1.65, marginBottom: 22 }}>
+          Regulators argue users deserve to know when romantic dialogue, memories, fan art, and emotional feedback are machine-generated.
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={3400}>
+        <div style={{
+          borderLeft: '1px solid hsl(var(--foreground) / 0.8)',
+          padding: '4px 0 4px 14px',
+          marginTop: 'auto',
+        }}>
+          <div className="serif" style={{ fontSize: 17, color: 'hsl(var(--hero-subtitle))', lineHeight: 1.4, fontStyle: 'italic' }}>
+            “Personalisation should not be mistaken for reciprocity.”
+          </div>
+          <div className="mono" style={{ fontSize: 9, color: 'hsl(var(--muted-foreground))', letterSpacing: 2, marginTop: 10 }}>
+            — EU COMMISSION ON SYNTHETIC INTIMACY
+          </div>
+        </div>
+      </FadeIn>
+    </div>
+  );
+}
+
+/* ---------- 7. Final — chat + poster ---------- */
+function FinalScene({ sceneElapsed }) {
+  // Phases (relative to scene start)
+  //  0–1500   bubble in
+  //  1500–3000 buttons in
+  //  3000–4500 hover ai
+  //  4500–6000 hover self
+  //  6000–7500 buttons neutral
+  //  7500–8800 ui dissolves
+  //  8800–14000 poster
+  const hover =
+    sceneElapsed > 3000 && sceneElapsed < 4500 ? 'ai' :
+    sceneElapsed > 4500 && sceneElapsed < 6000 ? 'self' :
+    null;
+  const dissolving = sceneElapsed > 7500;
+  const posterIn = sceneElapsed > 8800;
+
+  const uiOpacity = dissolving ? Math.max(0, 1 - (sceneElapsed - 7500) / 900) : 1;
+  const uiBlur = dissolving ? Math.min(8, (sceneElapsed - 7500) / 120) : 0;
+
+  return (
+    <div style={{ height: '100%', background: '#000', position: 'relative', overflow: 'hidden' }}>
+      {/* CHAT UI LAYER */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        display: 'flex', flexDirection: 'column',
+        opacity: uiOpacity,
+        filter: `blur(${uiBlur}px)`,
+        transition: 'opacity 200ms linear, filter 200ms linear',
+        pointerEvents: 'none',
+      }}>
+        <div style={{
+          padding: '50px 16px 12px',
+          borderBottom: '1px solid hsl(var(--border) / 0.5)',
+          display: 'flex', alignItems: 'center', gap: 10,
+        }}>
+          <LogoMark size={20} opacity={0.85} />
+          <div style={{ fontSize: 13, fontWeight: 500 }}>Yue</div>
+        </div>
+
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+          <FadeIn delay={400} duration={500}>
+            <div style={{
+              border: '1px solid hsl(var(--border))',
+              borderRadius: '14px 14px 14px 4px',
+              padding: '10px 16px', fontSize: 13,
+              color: 'hsl(var(--hero-subtitle))',
+              marginBottom: 36,
+              textAlign: 'center',
+              maxWidth: 230,
+              background: '#000',
+            }}>
+              I can generate another <span className="serif" style={{ fontSize: 15 }}>memory</span> for us.
+            </div>
+          </FadeIn>
+
+          <FadeIn delay={1500} duration={500}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 240 }}>
+              <div style={{
+                background: hover === 'ai' ? 'hsl(var(--foreground))' : 'transparent',
+                color: hover === 'ai' ? '#000' : 'hsl(var(--foreground))',
+                border: '1px solid hsl(var(--foreground))',
+                borderRadius: 10, padding: '13px 18px',
+                fontSize: 13, fontWeight: 500, textAlign: 'center',
+                transition: 'all 500ms ease',
+                transform: hover === 'ai' ? 'scale(1.02)' : 'scale(1)',
+              }}>
+                Create love story
+              </div>
+              <div style={{
+                background: hover === 'self' ? 'hsl(var(--foreground))' : 'transparent',
+                color: hover === 'self' ? '#000' : 'hsl(var(--muted-foreground))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: 10, padding: '13px 18px',
+                fontSize: 13, textAlign: 'center',
+                transition: 'all 500ms ease',
+                transform: hover === 'self' ? 'scale(1.02)' : 'scale(1)',
+              }}>
+                Write it myself
+              </div>
+            </div>
+          </FadeIn>
+        </div>
+      </div>
+
+      {/* POSTER LAYER */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        display: 'flex', flexDirection: 'column',
+        padding: '50px 22px 28px',
+        opacity: posterIn ? 1 : 0,
+        transition: 'opacity 700ms ease',
+        pointerEvents: 'none',
+      }}>
+        {/* top edition strip */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="mono" style={{ fontSize: 8.5, letterSpacing: 2.5, color: 'hsl(var(--muted-foreground))' }}>
+            MINDLOOP · VOL. I
+          </div>
+          <div className="mono" style={{ fontSize: 8.5, letterSpacing: 2.5, color: 'hsl(var(--muted-foreground))' }}>
+            2036
+          </div>
+        </div>
+
+        {/* center stage */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          textAlign: 'center',
+          gap: 32,
+        }}>
+          <LogoMark size={36} opacity={0.55} />
+
+          <div style={{
+            animation: posterIn ? 'poster-in 1400ms ease forwards' : 'none',
+            opacity: 0,
+          }}>
+            <div className="serif" style={{
+              fontSize: 36,
+              lineHeight: 1.02,
+              color: 'hsl(var(--foreground))',
+              fontStyle: 'italic',
+              letterSpacing: -2,
+            }}>
+              Who is the<br/>creator<br/>when love is<br/>automated?
+            </div>
+          </div>
+
+          <FadeIn delay={posterIn ? 1600 : 99999} duration={900}>
+            <div style={{
+              width: 40, height: 1, background: 'rgba(255,255,255,0.35)',
+              margin: '0 auto',
+            }} />
+          </FadeIn>
+
+          <FadeIn delay={posterIn ? 1900 : 99999} duration={900}>
+            <div className="mono" style={{ fontSize: 9.5, letterSpacing: 2.5, color: 'hsl(var(--muted-foreground))', lineHeight: 1.7 }}>
+              A SPECULATIVE COMPANION FEED<br/>
+              FROM A SOFTER, STRANGER FUTURE
+            </div>
+          </FadeIn>
+        </div>
+
+        {/* bottom credit */}
+        <FadeIn delay={posterIn ? 2400 : 99999} duration={900}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+          }}>
+            <div className="mono" style={{ fontSize: 8, letterSpacing: 2, color: 'hsl(var(--muted-foreground))' }}>
+              ED. #1287
+            </div>
+            <div className="mono" style={{ fontSize: 8, letterSpacing: 2, color: 'hsl(var(--muted-foreground))' }}>
+              EST. 2036
+            </div>
+          </div>
+        </FadeIn>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- App ---------- */
+function App() {
+  const [elapsed, setElapsed] = useState(0);
+  const [started, setStarted] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const startRef = useRef(0);
+
+  useEffect(() => {
+    if (!started) return;
+    startRef.current = Date.now();
+    setFinished(false);
+    const iv = setInterval(() => {
+      const e = Date.now() - startRef.current;
+      setElapsed(e);
+      if (e > TOTAL) {
+        clearInterval(iv);
+        setFinished(true);
+      }
+    }, 50);
+    return () => clearInterval(iv);
+  }, [started]);
+
+  const currentScene = SCENES.find(s => elapsed >= s.start && elapsed < s.end);
+  const sceneId = currentScene?.id || (elapsed >= TOTAL - 500 ? "hold" : "gap");
+
+  // cross-fade buffering
+  const [displayScene, setDisplayScene] = useState("gap");
+  const [transitioning, setTransitioning] = useState(false);
+  useEffect(() => {
+    if (sceneId !== displayScene) {
+      setTransitioning(true);
+      const t = setTimeout(() => {
+        setDisplayScene(sceneId);
+        setTransitioning(false);
+      }, 280);
+      return () => clearTimeout(t);
+    }
+  }, [sceneId, displayScene]);
+
+  const sceneElapsed = currentScene ? elapsed - currentScene.start : 0;
+
+  const renderScene = () => {
+    switch (displayScene) {
+      case "lock": return <LockScreen />;
+      case "app": return <AppHome />;
+      case "memories": return <MemoryPackage />;
+      case "chat": return <ChatScene />;
+      case "feed": return <SocialFeed />;
+      case "news": return <NewsScene />;
+      case "final": return <FinalScene sceneElapsed={sceneElapsed} />;
+      case "hold": return <FinalScene sceneElapsed={14000} />;
+      default: return null;
+    }
+  };
+
+  const isDark = ['lock','gap','hold'].includes(displayScene) || displayScene === 'final' || displayScene === 'chat' || displayScene === 'feed' || displayScene === 'news' || displayScene === 'memories' || displayScene === 'app';
+  // (we're full-mono so every scene is dark — status bar always white)
+
+  const restart = () => {
+    setElapsed(0);
+    setFinished(false);
+    setStarted(false);
+    setDisplayScene("gap");
+    setTimeout(() => setStarted(true), 50);
+  };
+
+  return (
+    <div style={{
+      width: '100vw', minHeight: '100vh',
+      background: '#0a0a0a',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 24, position: 'relative',
+    }}>
+      {/* faint background grid noise feel */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.025), transparent 60%)',
+        pointerEvents: 'none',
+      }} />
+
+      {/* Phone frame */}
+      <div style={{
+        width: 375, height: 812,
+        borderRadius: 50,
+        overflow: 'hidden',
+        position: 'relative',
+        background: '#000',
+        boxShadow: '0 0 0 1px #1a1a1a, 0 0 0 8px #0d0d0d, 0 30px 80px rgba(0,0,0,0.9), inset 0 0 0 1px rgba(255,255,255,0.04)',
+      }}>
+        {/* dynamic island */}
+        <div style={{
+          position: 'absolute', top: 11, left: '50%', transform: 'translateX(-50%)',
+          width: 122, height: 32, borderRadius: 20,
+          background: '#000', zIndex: 30,
+        }} />
+
+        {/* status bar */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20,
+          padding: '16px 28px 0',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          color: 'rgba(255,255,255,0.85)',
+          fontSize: 13, fontWeight: 600,
+          pointerEvents: 'none',
+        }}>
+          <span style={{ letterSpacing: -0.2 }}>9:41</span>
+          <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <span className="mono" style={{ fontSize: 9, letterSpacing: 0.5, opacity: 0.85 }}>5G</span>
+            <svg width="22" height="11" viewBox="0 0 22 11" fill="none">
+              <rect x="0.5" y="0.5" width="18" height="10" rx="2.5" stroke="white" strokeOpacity="0.6"/>
+              <rect x="2" y="2" width="15" height="7" rx="1.2" fill="white" fillOpacity="0.85"/>
+              <rect x="19.5" y="3.5" width="2" height="4" rx="1" fill="white" fillOpacity="0.5"/>
+            </svg>
+          </span>
+        </div>
+
+        {/* Content */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          opacity: transitioning || !started ? 0 : 1,
+          transition: 'opacity 280ms ease',
+        }}>
+          {started && renderScene()}
+        </div>
+
+        {/* Intro / start overlay */}
+        {!started && (
+          <div
+            onClick={() => setStarted(true)}
+            style={{
+              position: 'absolute', inset: 0,
+              background: '#000',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              gap: 18, cursor: 'pointer', zIndex: 25,
+            }}
+          >
+            <div className="mono" style={{ fontSize: 10, letterSpacing: 4, color: 'hsl(var(--muted-foreground))' }}>
+              MINDLOOP · VOL. I
+            </div>
+            <LogoMark size={44} opacity={0.7} />
+            <div className="serif" style={{ fontSize: 28, lineHeight: 1.05, textAlign: 'center', letterSpacing: -1 }}>
+              The Companion<br/>Feed
+            </div>
+            <div className="mono" style={{ fontSize: 9, letterSpacing: 3, color: 'hsl(var(--muted-foreground))', marginTop: 8 }}>
+              2036 · ~68s
+            </div>
+            <div className="mono" style={{
+              position: 'absolute', bottom: 56,
+              fontSize: 9, letterSpacing: 3, color: 'rgba(255,255,255,0.4)',
+            }} >
+              TAP TO BEGIN
+            </div>
+          </div>
+        )}
+
+        {/* Home indicator */}
+        <div style={{
+          position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
+          width: 134, height: 5, borderRadius: 3,
+          background: 'rgba(255,255,255,0.45)',
+          zIndex: 30,
+        }} />
+
+        {/* Replay button */}
+        {finished && (
+          <button
+            onClick={restart}
+            style={{
+              position: 'absolute',
+              top: 64, right: 18, zIndex: 40,
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              color: 'white',
+              borderRadius: 999,
+              padding: '6px 12px',
+              fontSize: 10,
+              letterSpacing: 2,
+              fontFamily: "'JetBrains Mono', monospace",
+              cursor: 'pointer',
+              backdropFilter: 'blur(10px)',
+            }}
+          >
+            ↻ REPLAY
+          </button>
+        )}
+      </div>
+
+      {/* Side caption */}
+      <div style={{
+        position: 'absolute', bottom: 22, left: 0, right: 0,
+        textAlign: 'center',
+        color: 'rgba(255,255,255,0.3)',
+        fontSize: 10, letterSpacing: 2.5,
+        fontFamily: "'JetBrains Mono', monospace",
+      }}>
+        MINDLOOP · COMPANION FEED · MONO REBUILD
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

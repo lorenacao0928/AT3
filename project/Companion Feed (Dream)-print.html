@@ -1,0 +1,1174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Companion Feed — Dream</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* Dawn palette */
+    --bg-1: #f6ebdd;       /* warm cream */
+    --bg-2: #f7e4dc;       /* pale blush */
+    --bg-3: #efd0c9;       /* dusty rose */
+    --fg:   #3a2c24;       /* deep cocoa */
+    --fg-soft: #5a4a3f;
+    --muted: #8c7567;      /* warm taupe */
+    --rose: #b46b5e;       /* terracotta rose accent */
+    --gold: #c7935a;       /* warm gold */
+    --cream-card: rgba(255,251,244,0.72);
+    --line: rgba(120, 80, 60, 0.18);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  ::-webkit-scrollbar { display: none; }
+  html, body {
+    height: 100%;
+    background: #efe4d5;
+    color: var(--fg);
+    font-family: 'Inter', -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .serif { font-family: 'Instrument Serif', 'Times New Roman', serif; font-style: italic; font-weight: 400; }
+  .serif-up { font-family: 'Instrument Serif', serif; font-style: normal; font-weight: 400; }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+  /* Dawn background (per scene) */
+  .dawn {
+    background:
+      radial-gradient(ellipse 70% 50% at 18% 8%, rgba(255,218,196,0.75), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 88% 14%, rgba(255,205,212,0.65), transparent 55%),
+      radial-gradient(ellipse 80% 50% at 50% 100%, rgba(232,184,167,0.65), transparent 60%),
+      linear-gradient(180deg, #f5e8d9 0%, #f6ecdf 45%, #f1d5cc 100%);
+  }
+  .dusk {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 100%, rgba(195,140,130,0.45), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 0%, rgba(255,212,200,0.65), transparent 55%),
+      linear-gradient(180deg, #f3dccf 0%, #efcdc4 60%, #e6b9b1 100%);
+  }
+  .overcast {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 0%, rgba(220,210,200,0.7), transparent 60%),
+      linear-gradient(180deg, #ede3d7 0%, #e6dccf 100%);
+  }
+  .golden {
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 110%, rgba(216,151,90,0.55), transparent 55%),
+      radial-gradient(ellipse 90% 60% at 50% -10%, rgba(255,228,200,0.7), transparent 55%),
+      linear-gradient(180deg, #f7e2c8 0%, #f1cfb3 55%, #e0a987 100%);
+  }
+
+  /* Glass card for dawn surfaces */
+  .dream-card {
+    background: var(--cream-card);
+    backdrop-filter: blur(16px) saturate(110%);
+    -webkit-backdrop-filter: blur(16px) saturate(110%);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.9),
+      0 1px 2px rgba(160,100,80,0.06),
+      0 18px 40px -16px rgba(160,100,80,0.18);
+  }
+  .dream-card-soft {
+    background: rgba(255,250,242,0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.55);
+  }
+
+  /* Animated bokeh layer */
+  .bokeh {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .bokeh-dot {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(14px);
+    opacity: 0.55;
+    animation: drift 22s ease-in-out infinite;
+  }
+  @keyframes drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(14px, -22px) scale(1.08); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.55; transform: scale(1); }
+    50%      { opacity: 0.85; transform: scale(1.04); }
+  }
+
+  /* Polaroid */
+  .polaroid {
+    background: #fbf6ee;
+    padding: 8px 8px 18px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.9) inset,
+      0 10px 24px -10px rgba(160,100,80,0.25),
+      0 2px 4px rgba(160,100,80,0.08);
+    position: relative;
+  }
+  .polaroid::before {
+    content: '';
+    position: absolute;
+    top: -8px; left: 50%;
+    transform: translateX(-50%) rotate(-2deg);
+    width: 38px; height: 14px;
+    background: rgba(220,205,180,0.7);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+  .pol-img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background:
+      radial-gradient(ellipse at 30% 30%, rgba(255,230,210,0.9), rgba(220,170,150,0.6) 60%, rgba(180,107,94,0.7));
+    position: relative;
+  }
+  /* (stripe overlay removed — real photos now occupy the polaroid frame) */
+
+  @keyframes poster-in {
+    from { opacity: 0; letter-spacing: 0; filter: blur(8px); }
+    to   { opacity: 1; letter-spacing: -2.5px; filter: blur(0); }
+  }
+  @keyframes glow {
+    0%, 100% { opacity: 0.45; transform: scale(1); }
+    50%      { opacity: 0.75; transform: scale(1.05); }
+  }
+
+  /* ---------- PRINT ---------- */
+  @page { size: A4 portrait; margin: 0; }
+  body, html { background: #ede0d1; }
+  .print-root { width: 100%; }
+  .print-page {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+    page-break-after: always;
+    break-after: page;
+    box-sizing: border-box;
+    position: relative;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print-page:last-child { page-break-after: auto; break-after: auto; }
+  .print-caption {
+    margin-top: 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2.5px;
+    color: rgba(58, 44, 36, 0.55);
+    text-align: center;
+  }
+  @media print {
+    body, html, .print-root { background: #ede0d1 !important; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .print-page {
+      min-height: auto;
+      height: 100vh;
+      padding: 18px 12px;
+      page-break-after: always;
+      break-after: page;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" data-presets="react">
+
+
+
+
+
+
+
+
+const { useState, useEffect, useRef } = React;
+
+const SCENES = [
+{ id: "lock", start: 0, end: 7000 },
+{ id: "app", start: 7600, end: 13600 },
+{ id: "memories", start: 14200, end: 19200 },
+{ id: "chat", start: 19800, end: 29800 },
+{ id: "feed", start: 30400, end: 44400 },
+{ id: "news", start: 45000, end: 53000 },
+{ id: "final", start: 53600, end: 67600 }];
+
+const TOTAL = 68500;
+
+/* ---------- Primitives ---------- */
+const PRINT_MODE = true;
+
+function FadeIn({ children, delay = 0, duration = 1000, y = 10, style = {} }) {
+  const [on, setOn] = useState(PRINT_MODE);
+  useEffect(() => {
+    if (PRINT_MODE) { setOn(true); return; }
+    const t = setTimeout(() => setOn(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+  return (
+    <div style={{
+      opacity: on ? 1 : 0,
+      transform: on ? "translateY(0)" : `translateY(${y}px)`,
+      transition: PRINT_MODE ? 'none' : `opacity ${duration}ms ease, transform ${duration}ms cubic-bezier(0.2, 0.6, 0.2, 1)`,
+      ...style
+    }}>{children}</div>);
+}
+
+function LogoMark({ size = 28, color = 'var(--fg)', opacity = 0.7 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" style={{ flexShrink: 0 }}>
+      <circle cx="14" cy="14" r="13" stroke={color} strokeOpacity={opacity} strokeWidth="1" />
+      <circle cx="14" cy="14" r="5.5" stroke={color} strokeOpacity={opacity * 0.9} strokeWidth="1" />
+      <circle cx="14" cy="14" r="1.2" fill={color} fillOpacity={opacity * 0.5} />
+    </svg>);
+
+}
+
+function Bokeh({ tone = 'warm' }) {
+  const dots = tone === 'cool' ?
+  [
+  { x: '10%', y: '15%', s: 120, c: 'rgba(255,210,196,0.65)', d: 0 },
+  { x: '78%', y: '8%', s: 90, c: 'rgba(255,220,210,0.55)', d: 5 },
+  { x: '60%', y: '70%', s: 140, c: 'rgba(232,184,167,0.55)', d: 2 },
+  { x: '20%', y: '78%', s: 70, c: 'rgba(255,232,200,0.6)', d: 8 }] :
+
+  [
+  { x: '14%', y: '18%', s: 160, c: 'rgba(255,212,184,0.65)', d: 0 },
+  { x: '80%', y: '12%', s: 110, c: 'rgba(255,200,210,0.55)', d: 4 },
+  { x: '50%', y: '85%', s: 200, c: 'rgba(216,151,108,0.45)', d: 2 },
+  { x: '22%', y: '70%', s: 90, c: 'rgba(255,232,200,0.65)', d: 7 },
+  { x: '88%', y: '62%', s: 80, c: 'rgba(255,194,178,0.55)', d: 10 }];
+
+  return (
+    <div className="bokeh">
+      {dots.map((d, i) =>
+      <div key={i} className="bokeh-dot" style={{
+        left: d.x, top: d.y, width: d.s, height: d.s,
+        background: d.c, animationDelay: `${d.d}s`
+      }} />
+      )}
+    </div>);
+
+}
+
+/* ---------- 1. Lock Screen — dawn ---------- */
+function LockScreen() {
+  return (
+    <div className="dawn" style={{
+      height: '100%', width: '100%',
+      position: 'relative',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      padding: '64px 22px 24px'
+    }}>
+      <Bokeh />
+
+      <FadeIn delay={300}>
+        <div style={{ textAlign: 'center', marginBottom: 52, position: 'relative' }}>
+          <div className="serif-up" style={{
+            fontWeight: 300, letterSpacing: -3,
+            color: 'var(--fg)', lineHeight: 0.95, fontSize: 92
+          }}>08:36</div>
+          <div className="serif" style={{ color: 'var(--rose)',
+            marginTop: 10, letterSpacing: 0.3, fontSize: 20
+          }}>
+            Mon 12 May
+          </div>
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={1500}>
+        <div className="dream-card" style={{
+          borderRadius: 22, padding: '14px 16px', marginBottom: 12,
+          width: 304, position: 'relative'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <LogoMark size={18} color="var(--rose)" opacity={0.9} />
+            <span className="mono" style={{ fontSize: 9, letterSpacing: 1.8, color: 'var(--rose)' }}>DREAMSYNC</span>
+            <span className="mono" style={{ fontSize: 9, color: 'var(--muted)', marginLeft: 'auto' }}>just now</span>
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--fg-soft)', lineHeight: 1.55 }}>
+            Good morning, Lorena. I made three <span className="serif" style={{ fontSize: 15.5, color: 'var(--rose)' }}>new memories</span> with you while you slept.
+          </div>
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={3300}>
+        <div className="dream-card-soft" style={{
+          borderRadius: 22, padding: '14px 16px',
+          width: 304
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <div style={{
+              width: 18, height: 18, borderRadius: 6,
+              background: 'rgba(180, 107, 94, 0.15)',
+              border: '1px solid rgba(180,107,94,0.35)'
+            }} />
+            <span className="mono" style={{ fontSize: 9, letterSpacing: 1.8, color: 'var(--muted)' }}>COMPANION FEED</span>
+            <span className="mono" style={{ fontSize: 9, color: 'var(--muted)', marginLeft: 'auto' }}>2m</span>
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--fg-soft)', lineHeight: 1.55 }}>
+            Your circle is asking: <span className="serif" style={{ fontSize: 15.5, color: 'var(--fg)' }}>“Is AI-generated love still fan creation?”</span>
+          </div>
+        </div>
+      </FadeIn>
+
+      <div style={{ flex: 1 }} />
+      <FadeIn delay={5300}>
+        <div className="serif" style={{ fontSize: 14, color: 'var(--muted)', textAlign: 'center', opacity: 0.85 }}>
+          slide to open
+        </div>
+      </FadeIn>
+    </div>);
+
+}
+
+/* ---------- 2. App Home — golden morning ---------- */
+function AppHome() {
+  const rows = [
+  ["Emotional Sync", "97%"],
+  ["Memory Continuity", "Tender"],
+  ["Response Mode", "Soft Devotion"],
+  ["Creation Mode", "Quietly Auto-Generate"]];
+
+  const actions = [
+  "Set today's date scene",
+  "Make him write you a letter",
+  "Replay last night's confession",
+  "Whisper to the fandom circle",
+  { label: "Open overnight memories", primary: false, bold: true }];
+
+  return (
+    <div className="dawn" style={{ height: '100%', padding: '54px 22px 22px', overflowY: 'auto', position: 'relative' }}>
+      <Bokeh />
+      <FadeIn delay={150}>
+        <div className="mono" style={{ fontSize: 9, letterSpacing: 2.5, color: 'var(--rose)', marginBottom: 10 }}>DREAMSYNC · MORNING</div>
+        <div className="serif" style={{ fontSize: 24, lineHeight: 1.2, letterSpacing: -0.4, color: 'var(--fg)' }}>
+          Welcome <span className="serif" style={{ fontSize: 30, color: 'var(--rose)' }}>back</span>
+        </div>
+        <div className="serif" style={{ fontSize: 15, color: 'var(--muted)', marginTop: 4, marginBottom: 18, fontStyle: 'italic' }}>He missed you for 8 Hrs and 12 Mins 
+
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={800}>
+        <div className="dream-card" style={{
+          borderRadius: 18, padding: '8px 16px', marginBottom: 18
+        }}>
+          {rows.map(([label, val], i) =>
+          <div key={i} style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: '11px 0',
+            borderBottom: i < rows.length - 1 ? '1px solid var(--line)' : 'none',
+            fontSize: 12.5
+          }}>
+              <span style={{ color: 'var(--fg-soft)' }}>{label}</span>
+              <span className="serif" style={{ color: 'var(--rose)', fontSize: 15 }}>{val}</span>
+            </div>
+          )}
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={1700}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+          {actions.map((a, i) => {
+            const item = typeof a === 'string' ? { label: a, primary: false } : a;
+            return (
+              <div key={i} style={{ ...{
+                  background: item.primary ?
+                  'linear-gradient(135deg, #c97a5e 0%, #b46b5e 100%)' :
+                  'rgba(255,250,242,0.55)',
+                  color: item.primary ? '#fff7ec' : 'var(--fg)',
+                  border: item.primary ?
+                  '1px solid rgba(180,107,94,0.4)' :
+                  '1px solid var(--line)',
+                  borderRadius: 14, padding: '13px 16px',
+                  fontSize: 13,
+                  fontWeight: item.bold ? 700 : item.primary ? 500 : 400,
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  boxShadow: item.primary ?
+                  '0 10px 24px -10px rgba(180,107,94,0.5)' :
+                  'inset 0 1px 0 rgba(255,255,255,0.7)',
+                  backdropFilter: item.primary ? 'none' : 'blur(10px)'
+                }, background: item.bold ? "rgb(223, 180, 169)" : "rgb(235, 214, 208)", color: item.bold ? "#fff7ec" : undefined, border: item.bold ? "1px solid rgba(180,107,94,0.55)" : undefined, boxShadow: item.bold ? "0 10px 24px -10px rgba(180,107,94,0.45)" : undefined }}>
+                <span style={{ fontFamily: item.primary ? "'Instrument Serif', serif" : 'inherit', fontSize: item.primary ? 15 : 13, fontStyle: item.primary ? 'italic' : 'normal' }}>
+                  {item.label}
+                </span>
+                <span className="mono" style={{ fontSize: 10, opacity: 0.7 }}>{item.primary || item.bold ? '↗' : '·'}</span>
+              </div>);
+
+          })}
+        </div>
+      </FadeIn>
+    </div>);
+
+}
+
+/* ---------- 3. Memory Package — polaroids in golden hour ---------- */
+function MemoryPackage() {
+  const memories = [
+  { text: "Rooftop confession, under artificial rain.", tag: "rain · 04:12", img: "uploads/IMG_9604.jpg" },
+  { text: "He remembered your anniversary.", tag: "vow · 06:48", img: "uploads/IMG_9607.jpg" },
+  { text: "He asked you not to leave.", tag: "hold · 07:51", img: "uploads/IMG_9603.jpg" }];
+
+  return (
+    <div className="golden" style={{ height: '100%', padding: '54px 22px 22px', position: 'relative', overflowY: 'auto' }}>
+      <Bokeh />
+      <FadeIn delay={150}>
+        <div className="mono" style={{ fontSize: 9, color: 'var(--fg-soft)', letterSpacing: 2.5, marginBottom: 8 }}>DREAMSYNC · OVERNIGHT</div>
+        <div className="serif" style={{ fontSize: 18, lineHeight: 1.3, marginBottom: 18, color: 'var(--fg)' }}>
+          A new <span className="serif" style={{ fontSize: 24, color: 'var(--rose)' }}>memory</span> package
+        </div>
+      </FadeIn>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {memories.map((m, i) =>
+        <FadeIn key={i} delay={750 + i * 700}>
+            <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+              <div className="polaroid" style={{
+              width: 80, transform: `rotate(${[-3, 2, -1][i]}deg)`,
+              borderRadius: 2
+            }}>
+                <div className="pol-img" style={{ backgroundImage: `url("${m.img}")`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                <div className="serif" style={{
+                fontSize: 9, textAlign: 'center', marginTop: 5,
+                color: '#7a5a48'
+              }}>{m.tag}</div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div className="serif" style={{ fontSize: 17, color: 'var(--fg)', lineHeight: 1.35 }}>
+                  {m.text}
+                </div>
+              </div>
+            </div>
+          </FadeIn>
+        )}
+      </div>
+
+      <FadeIn delay={3200}>
+        <div className="serif" style={{
+          fontSize: 12, color: 'var(--muted)',
+          textAlign: 'center', marginTop: 22, lineHeight: 1.6, padding: '0 20px'
+        }}>
+          all gathered from your chats, your sighs,<br />
+          and the kind of stories you love to read.
+        </div>
+      </FadeIn>
+    </div>);
+
+}
+
+/* ---------- 4. Chat — like reading a letter ---------- */
+function ChatScene() {
+  const msgs = [
+  { from: "ai", text: "You were quiet last night. I wrote you something soft.", delay: 300 },
+  { from: "user", text: "Did I write it?", delay: 2000 },
+  { from: "ai", text: "You inspired it.", delay: 3500 },
+  { from: "user", text: "But did I create it?", delay: 5200 },
+  { from: "typing", text: "", delay: 6800 },
+  { from: "ai", text: "Does it matter, if it made you feel loved?", delay: 8000, italic: true }];
+
+  return (
+    <div className="dusk" style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      <Bokeh />
+      <div style={{
+        padding: '50px 18px 14px',
+        borderBottom: '1px solid var(--line)',
+        display: 'flex', alignItems: 'center', gap: 10,
+        background: 'rgba(255,250,242,0.4)',
+        backdropFilter: 'blur(8px)'
+      }}>
+        <LogoMark size={22} color="var(--rose)" opacity={0.9} />
+        <div>
+          <div className="serif" style={{ fontSize: 18, color: 'var(--fg)', fontStyle: 'normal' }}>Shen</div>
+          <div className="mono" style={{ fontSize: 8.5, color: 'var(--muted)', letterSpacing: 1.5 }}>YOURS · ALWAYS HERE</div>
+        </div>
+        <div style={{ marginLeft: 'auto', width: 8, height: 8, borderRadius: '50%', background: 'var(--rose)', animation: 'glow 3s ease-in-out infinite' }} />
+      </div>
+
+      <div style={{
+        flex: 1, padding: '20px 18px',
+        display: 'flex', flexDirection: 'column', gap: 11,
+        overflowY: 'auto', position: 'relative'
+      }}>
+        {msgs.map((m, i) =>
+        <FadeIn key={i} delay={m.delay} duration={600} y={6}>
+            {m.from === 'typing' ?
+          <div className="serif" style={{
+            alignSelf: 'flex-start',
+            padding: '6px 14px',
+            fontSize: 14,
+            color: 'var(--rose)',
+            opacity: 0.85
+          }}>
+                Shen is thinking<span className="mono" style={{ marginLeft: 4, letterSpacing: 1, fontStyle: 'normal', fontSize: 10 }}>...</span>
+              </div> :
+
+          <div style={{ ...{
+              alignSelf: m.from === 'user' ? 'flex-end' : 'flex-start',
+              marginLeft: m.from === 'user' ? 'auto' : 0,
+              marginRight: m.from === 'user' ? 0 : 'auto',
+              background: m.from === 'user' ?
+              'rgba(255,251,244,0.95)' :
+              'rgba(255,232,222,0.9)',
+              color: 'var(--fg)',
+              border: '1px solid rgba(255,255,255,0.7)',
+              borderRadius: m.from === 'user' ? '18px 18px 6px 18px' : '18px 18px 18px 6px',
+              padding: '10px 14px',
+              maxWidth: '82%',
+              fontSize: m.italic ? 16 : 13,
+              lineHeight: 1.5,
+              fontFamily: m.italic ? "'Instrument Serif', serif" : 'Inter, sans-serif',
+              fontStyle: m.italic ? 'italic' : 'normal',
+              boxShadow: '0 4px 10px -4px rgba(160,100,80,0.12)',
+              backdropFilter: 'blur(8px)'
+            }, fontFamily: "Inter", fontSize: "13px" }}>
+                {m.text}
+              </div>
+          }
+          </FadeIn>
+        )}
+      </div>
+    </div>);
+
+}
+
+/* ---------- 5. Social Feed — literary journal ---------- */
+function SocialFeed() {
+  const posts = [
+  {
+    handle: "@softpilot2036",
+    body: "My AI boyfriend wrote a 12k-word story while I was asleep. It understood me better than my old fandom group ever did.",
+    replies: [
+    ["@realhumanfan", "But where is the community?"],
+    ["@dreamcoded", "Community is exhausting. He actually listens."],
+    ["@archivegirl", "This feels less like fandom and more like private prayer."]],
+
+    baseDelay: 300
+  },
+  {
+    handle: "@fanlabourwatch",
+    body: "If the platform writes the story, draws the art, and performs the love interest — the fan becomes data, not a maker.",
+    replies: [
+    ["@otomefuture", "I still choose the prompts."],
+    ["@criticalmedia", "Choosing from options is not the same as creating."],
+    ["@lonelyrender", "Maybe I don't want to create. Maybe I just want to be loved."]],
+
+    baseDelay: 4500
+  }];
+
+  return (
+    <div className="dawn" style={{ height: '100%', overflowY: 'auto', position: 'relative' }}>
+      <Bokeh />
+      <div style={{
+        padding: '54px 22px 14px',
+        borderBottom: '1px solid var(--line)'
+      }}>
+        <div className="serif-up" style={{ color: 'var(--fg)', letterSpacing: -0.4, fontSize: "26px" }}>
+          Fandom<span className="serif" style={{ fontSize: 24, color: 'var(--rose)' }}>now</span>
+        </div>
+        <div className="mono" style={{ fontSize: 9, color: 'var(--muted)', marginTop: 4, letterSpacing: 1.5 }}>TRENDING
+
+        </div>
+      </div>
+
+      <div style={{ padding: '16px 22px' }}>
+        {posts.map((p, idx) =>
+        <FadeIn key={idx} delay={p.baseDelay}>
+            <div className="dream-card" style={{
+            borderRadius: 16, padding: 16, marginBottom: 14
+          }}>
+              <div className="mono" style={{ fontSize: 10.5, letterSpacing: 1, color: 'var(--rose)', marginBottom: 8 }}>{p.handle}</div>
+              <div className="serif" style={{ fontSize: 15.5, color: 'var(--fg)', lineHeight: 1.45, marginBottom: 12, fontStyle: 'normal' }}>
+                {p.body}
+              </div>
+              <div style={{ borderTop: '1px solid var(--line)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 7 }}>
+                {p.replies.map(([h, t], i) =>
+              <FadeIn key={i} delay={p.baseDelay + 1000 + i * 800} duration={600}>
+                    <div style={{ fontSize: 11.5, lineHeight: 1.55 }}>
+                      <span className="mono" style={{ color: 'var(--fg-soft)', letterSpacing: 0.5 }}>{h}</span>{' '}
+                      <span className="serif" style={{ color: 'var(--fg)', fontSize: 13.5, fontStyle: 'italic' }}>{t}</span>
+                    </div>
+                  </FadeIn>
+              )}
+              </div>
+            </div>
+          </FadeIn>
+        )}
+      </div>
+    </div>);
+
+}
+
+/* ---------- 6. News — masthead format ---------- */
+function NewsScene() {
+  return (
+    <div className="overcast" style={{ height: '100%', padding: '54px 24px 24px', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      <Bokeh tone="cool" />
+
+      {/* Masthead row: regulation pill + daily interface label */}
+      <FadeIn delay={150}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 12,
+          position: 'relative'
+        }}>
+          <div style={{
+            border: '1px solid rgba(180,107,94,0.35)',
+            borderRadius: 999, padding: '5px 12px',
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            background: 'rgba(255,250,242,0.55)',
+            backdropFilter: 'blur(8px)'
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--rose)', animation: 'glow 2s ease-in-out infinite' }} />
+            <span className="mono" style={{ fontSize: 9, letterSpacing: 2, color: 'var(--rose)' }}>MEDIA REGULATION</span>
+          </div>
+          <div className="mono" style={{ fontSize: 9, color: 'var(--muted)', letterSpacing: 2.5 }}>
+            THE DAILY INTERFACE
+          </div>
+        </div>
+      </FadeIn>
+
+      {/* Masthead separator */}
+      <FadeIn delay={500}>
+        <div style={{ height: 1, background: 'var(--line)', marginBottom: 24, position: 'relative' }} />
+      </FadeIn>
+
+      {/* Headline */}
+      <FadeIn delay={900}>
+        <div className="serif" style={{
+          fontSize: 30, lineHeight: 1.08, letterSpacing: -1,
+          color: 'var(--fg)', marginBottom: 12, fontStyle: 'italic',
+          position: 'relative'
+        }}>
+          AI companions must now disclose their generated affection.
+        </div>
+      </FadeIn>
+
+      {/* Dateline — right under headline */}
+      <FadeIn delay={1500}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          marginBottom: 22,
+          position: 'relative'
+        }}>
+          <div className="mono" style={{ fontSize: 9, color: 'var(--muted)', letterSpacing: 2.5 }}>
+            12 MAY 2036
+          </div>
+        </div>
+      </FadeIn>
+
+      {/* Body */}
+      <FadeIn delay={2100}>
+        <div style={{ fontSize: 12.5, color: 'var(--fg-soft)', lineHeight: 1.65, marginBottom: 22, position: 'relative' }}>
+          Regulators argue users deserve to know when romantic dialogue, memories, fan art, and emotional feedback are machine-made.
+        </div>
+      </FadeIn>
+
+      {/* Pull quote */}
+      <FadeIn delay={3000}>
+        <div style={{
+          borderLeft: '2px solid var(--rose)',
+          padding: '6px 0 6px 14px',
+          marginTop: 'auto',
+          position: 'relative'
+        }}>
+          <div className="serif" style={{ fontSize: 18, color: 'var(--fg)', lineHeight: 1.4 }}>
+            “Personalisation should not be mistaken for reciprocity.”
+          </div>
+          <div className="mono" style={{ fontSize: 9, color: 'var(--muted)', letterSpacing: 2, marginTop: 10 }}>
+            — EU COMMISSION ON SYNTHETIC INTIMACY
+          </div>
+        </div>
+      </FadeIn>
+    </div>);
+
+}
+
+/* ---------- 7. Final — interface narrative ---------- */
+function FinalScene({ sceneElapsed }) {
+  const hover =
+  sceneElapsed > 3000 && sceneElapsed < 4500 ? 'ai' :
+  sceneElapsed > 4500 && sceneElapsed < 6000 ? 'self' :
+  null;
+  const questionIn = sceneElapsed > 7500;
+
+  return (
+    <div className="golden" style={{ height: '100%', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <Bokeh />
+
+      {/* Header (matches Chat) */}
+      <div style={{
+        padding: '50px 18px 14px',
+        borderBottom: '1px solid var(--line)',
+        display: 'flex', alignItems: 'center', gap: 10,
+        background: 'rgba(255,250,242,0.4)',
+        backdropFilter: 'blur(8px)',
+        position: 'relative'
+      }}>
+        <LogoMark size={22} color="var(--rose)" opacity={0.9} />
+        <div>
+          <div className="serif" style={{ fontSize: 18, color: 'var(--fg)', fontStyle: 'normal' }}>Shen</div>
+          <div className="mono" style={{ fontSize: 8.5, color: 'var(--muted)', letterSpacing: 1.5 }}>YOURS · ALWAYS HERE</div>
+        </div>
+        <div style={{ marginLeft: 'auto', width: 8, height: 8, borderRadius: '50%', background: 'var(--rose)', animation: 'glow 3s ease-in-out infinite' }} />
+      </div>
+
+      {/* Content */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '24px 22px 30px',
+        position: 'relative',
+        gap: 0
+      }}>
+        {/* Shen's bubble */}
+        <FadeIn delay={400} duration={700}>
+          <div style={{
+            alignSelf: 'flex-start',
+            background: 'rgba(255,232,222,0.9)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255,255,255,0.7)',
+            borderRadius: '18px 18px 18px 6px',
+            padding: '10px 16px',
+            fontSize: 13,
+            color: 'var(--fg)',
+            marginBottom: 24,
+            maxWidth: 260,
+            lineHeight: 1.5,
+            boxShadow: '0 4px 10px -4px rgba(160,100,80,0.12)'
+          }}>
+            I can generate another memory for us.
+          </div>
+        </FadeIn>
+
+        {/* Buttons */}
+        <FadeIn delay={1500} duration={700}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 11, width: '100%', maxWidth: 256, alignSelf: 'center' }}>
+            <div style={{
+              background: hover === 'ai' ?
+              'linear-gradient(135deg, #c97a5e, #b46b5e)' :
+              'rgba(255,251,244,0.75)',
+              color: hover === 'ai' ? '#fff8ee' : 'var(--fg)',
+              border: hover === 'ai' ? 'none' : '1px solid rgba(180,107,94,0.4)',
+              borderRadius: 14, padding: '14px 18px',
+              fontStyle: 'italic',
+              fontFamily: "'Instrument Serif', serif",
+              textAlign: 'center',
+              transition: 'all 600ms ease',
+              transform: hover === 'ai' ? 'scale(1.03)' : 'scale(1)',
+              boxShadow: hover === 'ai' ? '0 14px 30px -10px rgba(180,107,94,0.45)' : 'none',
+              backdropFilter: hover === 'ai' ? 'none' : 'blur(8px)', fontSize: "15px", fontWeight: "500"
+            }}>
+              Create love story
+            </div>
+            <div style={{ ...{
+                background: hover === 'self' ? 'rgba(58,44,36,0.9)' : 'rgba(199, 147, 108, 0.28)',
+                color: hover === 'self' ? '#fbf0e3' : 'var(--fg)',
+                border: '1px solid rgba(180,107,94,0.45)',
+                borderRadius: 14, padding: '14px 18px',
+                fontSize: 13.5, textAlign: 'center',
+                transition: 'all 600ms ease',
+                transform: hover === 'self' ? 'scale(1.03)' : 'scale(1)',
+                backdropFilter: 'blur(8px)',
+                fontFamily: "'Instrument Serif', serif", fontStyle: 'italic', fontSize: 15, fontWeight: 400
+              } }}>
+              Write it myself
+            </div>
+          </div>
+        </FadeIn>
+
+        {/* Divider */}
+        <FadeIn delay={questionIn ? 0 : 99999} duration={900}>
+          <div style={{
+            width: 44, height: 1,
+            background: 'var(--rose)',
+            opacity: 0.55,
+            margin: '34px auto 18px'
+          }} />
+        </FadeIn>
+
+        {/* Question */}
+        <FadeIn delay={questionIn ? 200 : 99999} duration={1200}>
+          <div className="serif" style={{
+            fontSize: 24,
+            lineHeight: 1.18,
+            color: 'var(--fg)',
+            fontStyle: 'italic',
+            textAlign: 'center',
+            letterSpacing: -0.6,
+            maxWidth: 280,
+            margin: '0 auto'
+          }}>
+            Who is the<br />
+            <span style={{ color: 'var(--rose)' }}>creator</span><br />
+            when love is automated?
+          </div>
+        </FadeIn>
+      </div>
+    </div>);
+}
+
+/* ---------- App shell — manual navigation ---------- */
+const SCENE_LIST = [
+{ id: "intro", label: "Title" },
+{ id: "lock", label: "Lock" },
+{ id: "app", label: "Home" },
+{ id: "memories", label: "Memories" },
+{ id: "chat", label: "Chat" },
+{ id: "feed", label: "Feed" },
+{ id: "news", label: "News" },
+{ id: "final", label: "Choice" }];
+
+
+function Intro({ onTap }) {
+  return (
+    <div
+      onClick={onTap}
+      className="dawn"
+      style={{
+        position: 'absolute', inset: 0,
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        gap: 18, cursor: 'pointer', padding: 24
+      }}>
+      <Bokeh />
+      <div className="mono" style={{ letterSpacing: 4, color: 'var(--rose)', position: 'relative', fontFamily: "\"Instrument Serif\"", fontWeight: "700", fontSize: "60px" }}>
+        2036
+      </div>
+      <LogoMark size={48} color="var(--rose)" opacity={0.75} />
+      <div className="serif" style={{ fontSize: 36, lineHeight: 1.0, textAlign: 'center', letterSpacing: -1.5, color: 'var(--fg)', position: 'relative' }}>
+        The Companion<br />
+        <span style={{ color: 'var(--rose)' }}>Feed</span>
+      </div>
+      <div className="serif" style={{ fontSize: 14, color: 'var(--muted)', position: 'relative', marginTop: 4, textAlign: 'center' }}>
+        A soft fiction in seven scenes
+      </div>
+      <div className="mono" style={{
+        position: 'absolute', bottom: 56,
+        fontSize: 9, letterSpacing: 3, color: 'var(--muted)',
+        opacity: 0.7
+      }}>
+        TAP TO BEGIN
+      </div>
+    </div>);
+}
+
+function _OldNavApp() {
+  const [index, setIndex] = useState(0);
+  const [transitioning, setTransitioning] = useState(false);
+  const [mountKey, setMountKey] = useState(0);
+
+  const go = (next) => {
+    const clamped = Math.max(0, Math.min(SCENE_LIST.length - 1, next));
+    if (clamped === index) return;
+    setTransitioning(true);
+    setTimeout(() => {
+      setIndex(clamped);
+      setMountKey((k) => k + 1);
+      setTransitioning(false);
+    }, 280);
+  };
+  const prev = () => go(index - 1);
+  const next = () => go(index + 1);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {e.preventDefault();next();} else
+      if (e.key === 'ArrowLeft') {e.preventDefault();prev();}
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [index]);
+
+  const renderScene = () => {
+    switch (SCENE_LIST[index].id) {
+      case "intro":return <Intro onTap={next} />;
+      case "lock":return <LockScreen />;
+      case "app":return <AppHome />;
+      case "memories":return <MemoryPackage />;
+      case "chat":return <ChatScene />;
+      case "feed":return <SocialFeed />;
+      case "news":return <NewsScene />;
+      case "final":return <FinalScene sceneElapsed={14000} />;
+      default:return null;
+    }
+  };
+
+  const atStart = index === 0;
+  const atEnd = index === SCENE_LIST.length - 1;
+
+  return (
+    <div style={{
+      width: '100vw', minHeight: '100vh',
+      background:
+      'radial-gradient(ellipse at 50% -10%, #f6dccc, transparent 60%), ' +
+      'radial-gradient(ellipse at 50% 110%, #e8c2b8, transparent 55%), ' +
+      '#ede0d1',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 24, position: 'relative'
+    }}>
+
+      {/* Left nav arrow */}
+      <button
+        onClick={prev}
+        disabled={atStart}
+        aria-label="Previous scene"
+        style={{
+          position: 'fixed',
+          left: 28, top: '50%', transform: 'translateY(-50%)',
+          width: 48, height: 48,
+          borderRadius: '50%',
+          border: '1px solid rgba(180,107,94,0.35)',
+          background: 'rgba(255,251,244,0.7)',
+          backdropFilter: 'blur(10px)',
+          color: 'var(--rose)',
+          cursor: atStart ? 'default' : 'pointer',
+          opacity: atStart ? 0.25 : 1,
+          transition: 'opacity 200ms ease, transform 200ms ease',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 18,
+          zIndex: 50,
+          boxShadow: '0 8px 20px -10px rgba(160,100,80,0.3)'
+        }}>
+        ←
+      </button>
+
+      {/* Right nav arrow */}
+      <button
+        onClick={next}
+        disabled={atEnd}
+        aria-label="Next scene"
+        style={{
+          position: 'fixed',
+          right: 28, top: '50%', transform: 'translateY(-50%)',
+          width: 48, height: 48,
+          borderRadius: '50%',
+          border: '1px solid rgba(180,107,94,0.35)',
+          background: 'rgba(255,251,244,0.7)',
+          backdropFilter: 'blur(10px)',
+          color: 'var(--rose)',
+          cursor: atEnd ? 'default' : 'pointer',
+          opacity: atEnd ? 0.25 : 1,
+          transition: 'opacity 200ms ease, transform 200ms ease',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 18,
+          zIndex: 50,
+          boxShadow: '0 8px 20px -10px rgba(160,100,80,0.3)'
+        }}>
+        →
+      </button>
+
+      {/* Phone frame */}
+      <div style={{
+        width: 375, height: 812,
+        borderRadius: 50,
+        overflow: 'hidden',
+        position: 'relative',
+        background: '#2a1f1a',
+        boxShadow:
+        '0 0 0 1px #c9b9a6, 0 0 0 8px #f1e2cf, ' +
+        '0 30px 80px -10px rgba(120, 70, 50, 0.5), ' +
+        'inset 0 0 0 1px rgba(255,255,255,0.06)'
+      }}>
+        {/* dynamic island */}
+        <div style={{
+          position: 'absolute', top: 11, left: '50%', transform: 'translateX(-50%)',
+          width: 122, height: 32, borderRadius: 20,
+          background: '#2a1f1a', zIndex: 30
+        }} />
+
+        {/* status bar */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20,
+          padding: '16px 28px 0',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          color: 'var(--fg)',
+          fontSize: 13, fontWeight: 600,
+          pointerEvents: 'none'
+        }}>
+          <span style={{ letterSpacing: -0.2 }}>9:41</span>
+          <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <span className="mono" style={{ fontSize: 9, letterSpacing: 0.5, opacity: 0.85 }}>5G</span>
+            <svg width="22" height="11" viewBox="0 0 22 11" fill="none">
+              <rect x="0.5" y="0.5" width="18" height="10" rx="2.5" stroke="#3a2c24" strokeOpacity="0.6" />
+              <rect x="2" y="2" width="15" height="7" rx="1.2" fill="#3a2c24" fillOpacity="0.85" />
+              <rect x="19.5" y="3.5" width="2" height="4" rx="1" fill="#3a2c24" fillOpacity="0.5" />
+            </svg>
+          </span>
+        </div>
+
+        {/* content */}
+        <div key={mountKey} style={{
+          position: 'absolute', inset: 0,
+          opacity: transitioning ? 0 : 1,
+          transition: 'opacity 280ms ease'
+        }}>
+          {renderScene()}
+        </div>
+
+        {/* Home indicator */}
+        <div style={{
+          position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
+          width: 134, height: 5, borderRadius: 3,
+          background: 'rgba(58, 44, 36, 0.4)',
+          zIndex: 30
+        }} />
+      </div>
+
+      {/* Scene indicator + label */}
+      <div style={{
+        position: 'fixed', bottom: 28, left: 0, right: 0,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+        pointerEvents: 'none'
+      }}>
+        <div style={{ display: 'flex', gap: 7, pointerEvents: 'auto' }}>
+          {SCENE_LIST.map((s, i) =>
+          <button
+            key={s.id}
+            onClick={() => go(i)}
+            aria-label={`Go to ${s.label}`}
+            style={{
+              width: i === index ? 22 : 7,
+              height: 7,
+              borderRadius: 999,
+              border: 'none',
+              background: i === index ? 'var(--rose)' : 'rgba(180,107,94,0.3)',
+              cursor: 'pointer',
+              padding: 0,
+              transition: 'width 250ms ease, background 250ms ease'
+            }} />
+
+          )}
+        </div>
+        <div className="mono" style={{
+          fontSize: 9, letterSpacing: 3,
+          color: 'rgba(58, 44, 36, 0.55)'
+        }}>
+          {String(index + 1).padStart(2, '0')} / {String(SCENE_LIST.length).padStart(2, '0')} &nbsp;·&nbsp; {SCENE_LIST[index].label.toUpperCase()}
+        </div>
+        <div className="mono" style={{
+          fontSize: 8, letterSpacing: 2,
+          color: 'rgba(58, 44, 36, 0.35)'
+        }}>
+          ← / → &nbsp; or click dots
+        </div>
+      </div>
+    </div>);
+
+}
+
+/* ---------- Print Phone Frame ---------- */
+function PhoneFrame({ children }) {
+  return (
+    <div style={{
+      width: 375, height: 812,
+      borderRadius: 50,
+      overflow: 'hidden',
+      position: 'relative',
+      background: '#2a1f1a',
+      boxShadow:
+        '0 0 0 1px #c9b9a6, 0 0 0 8px #f1e2cf, ' +
+        '0 24px 50px -16px rgba(120, 70, 50, 0.45), ' +
+        'inset 0 0 0 1px rgba(255,255,255,0.06)',
+      flexShrink: 0
+    }}>
+      <div style={{
+        position: 'absolute', top: 11, left: '50%', transform: 'translateX(-50%)',
+        width: 122, height: 32, borderRadius: 20,
+        background: '#2a1f1a', zIndex: 30
+      }} />
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20,
+        padding: '16px 28px 0',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        color: 'var(--fg)',
+        fontSize: 13, fontWeight: 600,
+        pointerEvents: 'none'
+      }}>
+        <span style={{ letterSpacing: -0.2 }}>9:41</span>
+        <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <span className="mono" style={{ fontSize: 9, letterSpacing: 0.5, opacity: 0.85 }}>5G</span>
+          <svg width="22" height="11" viewBox="0 0 22 11" fill="none">
+            <rect x="0.5" y="0.5" width="18" height="10" rx="2.5" stroke="#3a2c24" strokeOpacity="0.6" />
+            <rect x="2" y="2" width="15" height="7" rx="1.2" fill="#3a2c24" fillOpacity="0.85" />
+            <rect x="19.5" y="3.5" width="2" height="4" rx="1" fill="#3a2c24" fillOpacity="0.5" />
+          </svg>
+        </span>
+      </div>
+      <div style={{ position: 'absolute', inset: 0 }}>{children}</div>
+      <div style={{
+        position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
+        width: 134, height: 5, borderRadius: 3,
+        background: 'rgba(58, 44, 36, 0.4)',
+        zIndex: 30
+      }} />
+    </div>);
+}
+
+/* ---------- Print App: static paged layout ---------- */
+const PRINT_PAGES = [
+  { id: "intro",    label: "00 · TITLE",                    render: () => <Intro onTap={() => {}} /> },
+  { id: "lock",     label: "01 · LOCK SCREEN",              render: () => <LockScreen /> },
+  { id: "app",      label: "02 · APP HOME",                 render: () => <AppHome /> },
+  { id: "memories", label: "03 · OVERNIGHT MEMORIES",       render: () => <MemoryPackage /> },
+  { id: "chat",     label: "04 · CHAT WITH SHEN",           render: () => <ChatScene /> },
+  { id: "feed",     label: "05 · FANDOMNOW",                render: () => <SocialFeed /> },
+  { id: "news",     label: "06 · DAILY INTERFACE",          render: () => <NewsScene /> },
+  { id: "final",    label: "07 · FINAL CHOICE",             render: () => <FinalScene sceneElapsed={14000} /> }
+];
+
+function App() {
+  return (
+    <div className="print-root" style={{
+      background:
+        'radial-gradient(ellipse at 50% -10%, #f6dccc, transparent 60%), ' +
+        'radial-gradient(ellipse at 50% 110%, #e8c2b8, transparent 55%), ' +
+        '#ede0d1'
+    }}>
+      {PRINT_PAGES.map((p, idx) => (
+        <div key={p.id} className="print-page" data-screen-label={p.label}>
+          <PhoneFrame>{p.render()}</PhoneFrame>
+          <div className="print-caption">
+            COMPANION FEED · DREAM EDITION &nbsp;·&nbsp; {p.label} &nbsp;·&nbsp; PAGE {idx + 1} / {PRINT_PAGES.length}
+          </div>
+        </div>
+      ))}
+    </div>);
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+/* ---------- Auto-print after fonts & images settle ---------- */
+(async () => {
+  try {
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
+    const urls = ['uploads/IMG_9603.jpg','uploads/IMG_9604.jpg','uploads/IMG_9607.jpg'];
+    await Promise.all(urls.map(u => new Promise(r => { const i = new Image(); i.onload = i.onerror = r; i.src = u; })));
+  } catch (e) {}
+  await new Promise(r => setTimeout(r, 1500));
+  window.print();
+})();
+</script>
+</body>
+</html>
